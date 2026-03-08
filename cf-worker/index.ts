@@ -3,7 +3,19 @@ import { cors } from 'hono/cors';
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.use('*', cors());
+// Configure CORS to allow all origins and methods
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  exposeHeaders: ['Content-Type'],
+  maxAge: 86400,
+}));
+
+// Handle OPTIONS requests explicitly for preflight
+app.options('*', (c) => {
+  return c.text('', 204);
+});
 
 // Types for Cloudflare Bindings
 export interface Env {
