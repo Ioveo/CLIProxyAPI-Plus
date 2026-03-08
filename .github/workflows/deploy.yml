@@ -16,8 +16,6 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: 'cf-worker'
           secrets: |
-            KIRO_CLIENT_SECRET
             ADMIN_PASSWORD
         env:
-          KIRO_CLIENT_SECRET: ${{ secrets.KIRO_CLIENT_SECRET }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
