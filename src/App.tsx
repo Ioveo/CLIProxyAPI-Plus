@@ -185,19 +185,46 @@ export default function App() {
 
               <div className="space-y-4 pt-4 border-t border-white/10">
                 <h3 className="text-lg font-medium text-white">3. GitHub Actions 自动部署 (可选)</h3>
-                <p className="text-sm">如果您想使用 GitHub Actions 自动部署，请在 GitHub 仓库的 Secrets 中添加以下变量：</p>
-                <ul className="list-disc list-inside space-y-2 text-sm ml-2 text-zinc-400">
-                  <li><code>CLOUDFLARE_ACCOUNT_ID</code>: 您的 Cloudflare 账户 ID</li>
-                  <li><code>CLOUDFLARE_API_TOKEN</code>: Cloudflare API 令牌。<strong>必须包含以下权限：</strong>
-                    <ul className="list-circle list-inside ml-6 mt-1 space-y-1 text-zinc-500">
-                      <li>账户 - Workers KV 存储 - 编辑</li>
-                      <li>账户 - Workers 脚本 - 编辑</li>
-                      <li>区域 - Workers 路由 - 编辑</li>
+                <p className="text-sm">如果您想使用 GitHub Actions 自动部署，请按以下步骤操作：</p>
+                <ol className="list-decimal list-inside space-y-3 text-sm ml-2 text-zinc-300">
+                  <li>
+                    <strong>创建工作流文件：</strong> 在您的 GitHub 仓库中，点击 <code>Add file</code> -&gt; <code>Create new file</code>。
+                    <br />文件路径输入：<code className="bg-zinc-800 px-1.5 py-0.5 rounded text-emerald-300">.github/workflows/deploy.yml</code>
+                    <br />将以下内容粘贴进去并提交：
+                    <div className="mt-2 bg-zinc-950 rounded-xl border border-white/10 p-4 font-mono text-xs overflow-x-auto text-zinc-400">
+<pre><code>{`name: Deploy Worker
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'cf-worker'
+          secrets: |
+            KIRO_CLIENT_SECRET
+            ADMIN_PASSWORD`}</code></pre>
+                    </div>
+                  </li>
+                  <li>
+                    <strong>添加 Secrets：</strong> 进入仓库的 <code>Settings</code> -&gt; 左侧菜单 <code>Secrets and variables</code> -&gt; <code>Actions</code>。
+                    <br />点击 <strong>New repository secret</strong>，添加以下四个变量：
+                    <ul className="list-disc list-inside ml-6 mt-2 space-y-1 text-zinc-400">
+                      <li><code>CLOUDFLARE_ACCOUNT_ID</code>: 您的 Cloudflare 账户 ID</li>
+                      <li><code>CLOUDFLARE_API_TOKEN</code>: Cloudflare API 令牌 (需包含 Workers 脚本、KV 存储、路由的编辑权限)</li>
+                      <li><code>KIRO_CLIENT_SECRET</code>: Kiro (AWS) 的 OAuth 密钥</li>
+                      <li><code>ADMIN_PASSWORD</code>: 您自定义的管理页面密码</li>
                     </ul>
                   </li>
-                  <li><code>KIRO_CLIENT_SECRET</code>: Kiro (AWS) 的 OAuth 密钥</li>
-                  <li><code>ADMIN_PASSWORD</code>: 您自定义的管理页面密码</li>
-                </ul>
+                </ol>
               </div>
             </div>
           </motion.section>
