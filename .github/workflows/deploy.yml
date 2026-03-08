@@ -18,3 +18,6 @@ jobs:
           secrets: |
             KIRO_CLIENT_SECRET
             ADMIN_PASSWORD
+        env:
+          KIRO_CLIENT_SECRET: ${{ secrets.KIRO_CLIENT_SECRET }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
