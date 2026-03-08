@@ -1,0 +1,5 @@
+{
+  "name": "CLIProxyAPI Plus for Cloudflare",
+  "description": "A Cloudflare Worker implementation and management dashboard for CLIProxyAPI Plus, supporting GLM-4.7 and AWS Kiro for AI coding tools.",
+  "requestFramePermissions": []
+}
