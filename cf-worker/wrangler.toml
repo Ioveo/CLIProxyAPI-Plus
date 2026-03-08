@@ -4,8 +4,8 @@ compatibility_date = "2024-03-08"
 
 # KV Namespaces for storing tokens and configuration
 kv_namespaces = [
-  { binding = "TOKENS", id = "d648f81f07c14adb9cdc01105ad2915f" },
-  { binding = "CONFIG", id = "cf69040b9c364799b5a24fd43b53f400" }
+  { binding = "TOKENS", id = "YOUR_KV_NAMESPACE_ID_HERE" },
+  { binding = "CONFIG", id = "YOUR_KV_NAMESPACE_ID_HERE" }
 ]
 
 [vars]

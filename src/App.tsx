@@ -178,8 +178,26 @@ export default function App() {
                   <li>创建 KV 命名空间: <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-emerald-300">npx wrangler kv:namespace create "TOKENS"</code></li>
                   <li>使用您的 KV ID 更新 <code className="bg-zinc-800 px-1.5 py-0.5 rounded">wrangler.toml</code></li>
                   <li>设置密钥: <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-emerald-300">npx wrangler secret put KIRO_CLIENT_SECRET</code></li>
+                  <li>设置管理密码: <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-emerald-300">npx wrangler secret put ADMIN_PASSWORD</code></li>
                   <li>部署: <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-emerald-300">npm run deploy</code></li>
                 </ol>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-white/10">
+                <h3 className="text-lg font-medium text-white">3. GitHub Actions 自动部署 (可选)</h3>
+                <p className="text-sm">如果您想使用 GitHub Actions 自动部署，请在 GitHub 仓库的 Secrets 中添加以下变量：</p>
+                <ul className="list-disc list-inside space-y-2 text-sm ml-2 text-zinc-400">
+                  <li><code>CLOUDFLARE_ACCOUNT_ID</code>: 您的 Cloudflare 账户 ID</li>
+                  <li><code>CLOUDFLARE_API_TOKEN</code>: Cloudflare API 令牌。<strong>必须包含以下权限：</strong>
+                    <ul className="list-circle list-inside ml-6 mt-1 space-y-1 text-zinc-500">
+                      <li>账户 - Workers KV 存储 - 编辑</li>
+                      <li>账户 - Workers 脚本 - 编辑</li>
+                      <li>区域 - Workers 路由 - 编辑</li>
+                    </ul>
+                  </li>
+                  <li><code>KIRO_CLIENT_SECRET</code>: Kiro (AWS) 的 OAuth 密钥</li>
+                  <li><code>ADMIN_PASSWORD</code>: 您自定义的管理页面密码</li>
+                </ul>
               </div>
             </div>
           </motion.section>
