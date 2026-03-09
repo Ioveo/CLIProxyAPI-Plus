@@ -143,20 +143,137 @@ app.post('/v1/chat/completions', async (c) => {
   }
 
   const token = authHeader.replace('Bearer ', '');
-  
-  // Determine provider from token or body model
   const model = body.model || 'glm-4';
   
+  // Route based on model prefix
   if (model.startsWith('glm-')) {
     return handleGLMRequest(c, body, token);
   } else if (model.startsWith('kiro-') || model.startsWith('aws-')) {
     return handleKiroRequest(c, body, token);
-  } else if (model.startsWith('codex') || model.includes('copilot')) {
+  } else if (model.startsWith('codex') || model.includes('copilot') || model.startsWith('gpt-')) {
     return handleCodexRequest(c, body, token);
+  } else if (model.startsWith('gemini-')) {
+    return handleGeminiRequest(c, body, token);
+  } else if (model.startsWith('claude-')) {
+    return handleClaudeRequest(c, body, token);
+  } else if (model.startsWith('kimi-') || model.startsWith('qwen')) {
+    return handleOpenAICompatibleRequest(c, body, token);
   }
 
-  return c.json({ error: 'Unsupported model' }, 400);
+  // Fallback
+  return c.json({ error: 'Unsupported model routing' }, 400);
 });
+
+// --- Enterprise Features Helpers ---
+
+// 1. Multi-channel Key Pool (Load Balancing)
+// In a stateless Worker, random selection provides an excellent approximation of round-robin
+// while avoiding the latency of reading/writing state to KV on every single request.
+async function getUpstreamKey(c: any, configKey: string, fallbackToken: string): Promise<string> {
+  const kvValue = await c.env.CONFIG.get(configKey);
+  if (!kvValue) return fallbackToken;
+
+  // Support multiple keys separated by comma (e.g., "key1,key2,key3")
+  const keys = kvValue.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0);
+  if (keys.length === 0) return fallbackToken;
+  if (keys.length === 1) return keys[0];
+
+  // Random selection for load balancing
+  const randomIndex = Math.floor(Math.random() * keys.length);
+  return keys[randomIndex];
+}
+
+// 2. Model Alias Resolution
+function resolveModelAlias(model: string): string {
+  const aliases: Record<string, string> = {
+    'gemini-3-pro-high': 'gemini-3-pro-preview',
+    'gemini-flash': 'gemini-2.5-flash',
+    'claude-sonnet-latest': 'claude-3-5-sonnet-20241022',
+    'gemini-claude-sonnet-4-5': 'claude-3-5-sonnet-20241022', // Cloaked alias
+    'claude-opus-4-5': 'claude-opus-4-5-20251101',
+    'codex-latest': 'gpt-5-codex',
+    'kimi-k2': 'moonshotai/kimi-k2:free'
+  };
+  return aliases[model] || model;
+}
+
+// --- Provider Handlers ---
+
+async function handleGeminiRequest(c: any, body: any, token: string) {
+  const upstreamKey = await getUpstreamKey(c, 'GEMINI_API_KEY', token);
+  const actualModel = resolveModelAlias(body.model);
+  
+  // 3. Payload Modification (Enterprise Feature)
+  // Auto-inject thinking budget for pro models if not present
+  if (actualModel.includes('pro') && !body.generationConfig?.thinkingConfig) {
+    body.generationConfig = body.generationConfig || {};
+    body.generationConfig.thinkingConfig = { thinkingBudget: 32768 };
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${upstreamKey}`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }});
+}
+
+async function handleClaudeRequest(c: any, body: any, token: string) {
+  const upstreamKey = await getUpstreamKey(c, 'CLAUDE_API_KEY', token);
+  const actualModel = resolveModelAlias(body.model);
+  body.model = actualModel; // Update body with resolved model
+  
+  const url = 'https://api.anthropic.com/v1/messages';
+  
+  // 4. Request Cloaking (Enterprise Feature)
+  // We construct clean headers, intentionally dropping identifying headers like User-Agent: ClaudeCode
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-api-key': upstreamKey,
+    'anthropic-version': '2023-06-01'
+  };
+
+  // Pass through necessary beta headers if they exist
+  const reqHeaders = c.req.header();
+  if (reqHeaders['anthropic-beta']) {
+    headers['anthropic-beta'] = reqHeaders['anthropic-beta'];
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(body)
+  });
+
+  return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }});
+}
+
+async function handleOpenAICompatibleRequest(c: any, body: any, token: string) {
+  const actualModel = resolveModelAlias(body.model);
+  body.model = actualModel;
+
+  let url = 'https://api.moonshot.cn/v1/chat/completions';
+  let upstreamKey = await getUpstreamKey(c, 'OPENAI_COMPATIBLE_KEY', token);
+
+  if (actualModel.startsWith('qwen')) {
+    url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+    upstreamKey = await getUpstreamKey(c, 'QWEN_API_KEY', token);
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${upstreamKey}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }});
+}
 
 // GLM Provider Handler
 async function handleGLMRequest(c: any, body: any, token: string) {

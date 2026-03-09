@@ -410,12 +410,70 @@ export default function App() {
                     </div>
                   </div>
                   <div className="bg-zinc-950 rounded-xl border border-white/10 p-4">
-                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider font-semibold">模型名称 (Model)</div>
-                    <code className="text-sm text-cyan-300 font-mono">glm-4.7</code>
-                    <span className="text-zinc-600 mx-2">或</span>
-                    <code className="text-sm text-cyan-300 font-mono">kiro-claude-3-5-sonnet</code>
-                    <span className="text-zinc-600 mx-2">或</span>
-                    <code className="text-sm text-cyan-300 font-mono">codex</code>
+                    <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-semibold">支持的模型名称 (Model)</div>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">Gemini 系</span>
+                        <code className="text-xs text-cyan-300 font-mono">gemini-3-pro-preview</code>
+                        <code className="text-xs text-cyan-300 font-mono">gemini-2.5-pro</code>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20">Claude 系</span>
+                        <code className="text-xs text-cyan-300 font-mono">claude-3-5-sonnet</code>
+                        <code className="text-xs text-cyan-300 font-mono">claude-opus-4-5</code>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded border border-purple-500/20">OpenAI 系</span>
+                        <code className="text-xs text-cyan-300 font-mono">gpt-5-codex</code>
+                        <code className="text-xs text-cyan-300 font-mono">codex</code>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs bg-orange-500/10 text-orange-400 px-2 py-1 rounded border border-orange-500/20">其他模型</span>
+                        <code className="text-xs text-cyan-300 font-mono">glm-4.7</code>
+                        <code className="text-xs text-cyan-300 font-mono">kimi-k2</code>
+                        <code className="text-xs text-cyan-300 font-mono">qwen3-coder-plus</code>
+                        <code className="text-xs text-cyan-300 font-mono">kiro-claude-3-5-sonnet</code>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-zinc-950 rounded-xl border border-white/10 p-4">
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider font-semibold">API 密钥 (API Key) 配置说明</div>
+                    <div className="text-sm text-zinc-400 space-y-2">
+                      <p>请在左侧的 <strong>系统配置</strong> 菜单中，添加以下键值对来配置您的上游 API Key：</p>
+                      <ul className="list-disc list-inside space-y-1 ml-2 text-xs">
+                        <li>键名: <code className="text-emerald-300">GEMINI_API_KEY</code> - 用于 Gemini 模型</li>
+                        <li>键名: <code className="text-emerald-300">CLAUDE_API_KEY</code> - 用于 Claude 模型</li>
+                        <li>键名: <code className="text-emerald-300">OPENAI_COMPATIBLE_KEY</code> - 用于 Kimi 等兼容模型</li>
+                        <li>键名: <code className="text-emerald-300">QWEN_API_KEY</code> - 用于通义千问模型</li>
+                      </ul>
+                      
+                      <div className="mt-4 p-3 bg-indigo-950/30 border border-indigo-500/20 rounded-lg">
+                        <h4 className="text-indigo-400 font-medium text-xs mb-2 flex items-center gap-1">
+                          <Server className="w-3 h-3" /> 企业级核心功能已启用
+                        </h4>
+                        <ul className="list-disc list-inside space-y-2 text-xs text-indigo-200/80">
+                          <li>
+                            <strong className="text-indigo-300">多渠道密钥池 (防限流)：</strong> 
+                            在配置 API Key 时，您可以填入多个 Key，用英文逗号 <code>,</code> 隔开（例如：<code>sk-111,sk-222,sk-333</code>）。系统会自动随机轮询使用这些 Key，完美解决单 Key 限流问题。
+                          </li>
+                          <li>
+                            <strong className="text-indigo-300">请求伪装 (Cloaking)：</strong> 
+                            针对 Claude Code 等严格客户端，系统会自动清洗请求头（如去除 <code>User-Agent: ClaudeCode</code>），防止被官方风控封号。
+                          </li>
+                          <li>
+                            <strong className="text-indigo-300">模型别名映射：</strong> 
+                            支持将 <code>gemini-claude-sonnet-4-5</code> 自动映射为真实的 <code>claude-3-5-sonnet-20241022</code>，方便在不支持自定义名称的客户端中使用。
+                          </li>
+                          <li>
+                            <strong className="text-indigo-300">Payload 动态修改：</strong> 
+                            当调用 Gemini Pro 系列模型时，系统会自动为您注入 <code>thinkingBudget: 32768</code>，强制开启深度思考模式。
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <p className="text-xs mt-2 text-zinc-500">提示：如果您没有在“系统配置”中设置这些 Key，系统将尝试直接使用您在客户端填写的密码作为 Key。</p>
+                    </div>
                   </div>
                 </div>
               </section>
