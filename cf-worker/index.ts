@@ -26,14 +26,23 @@ export interface Env {
   ADMIN_PASSWORD?: string;
 }
 
+// Admin Verification Middleware
+const adminAuth = async (c: any, next: any) => {
+  const authHeader = c.req.header('Authorization');
+  const expectedPassword = c.env.ADMIN_PASSWORD || 'admin123';
+  
+  if (!authHeader || authHeader !== `Bearer ${expectedPassword}`) {
+    return c.json({ success: false, error: 'Unauthorized' }, 401);
+  }
+  await next();
+};
+
 // Admin Verification Endpoint
 app.post('/admin/verify', async (c) => {
   try {
     const body = await c.req.json();
     const password = body.password;
     
-    // If ADMIN_PASSWORD is not set in environment, default to 'admin123' for testing
-    // In production, always set this via `wrangler secret put ADMIN_PASSWORD`
     const expectedPassword = c.env.ADMIN_PASSWORD || 'admin123';
     
     if (password === expectedPassword) {
@@ -45,6 +54,84 @@ app.post('/admin/verify', async (c) => {
     return c.json({ success: false, error: 'Bad request' }, 400);
   }
 });
+
+// --- Admin API Endpoints ---
+
+// Get all tokens
+app.get('/admin/tokens', adminAuth, async (c) => {
+  try {
+    const { keys } = await c.env.TOKENS.list();
+    const tokens = await Promise.all(keys.map(async (key: any) => {
+      const value = await c.env.TOKENS.get(key.name);
+      return { name: key.name, value };
+    }));
+    return c.json({ success: true, tokens });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
+});
+
+// Add or update a token
+app.post('/admin/tokens', adminAuth, async (c) => {
+  try {
+    const { name, value } = await c.req.json();
+    if (!name || !value) return c.json({ success: false, error: 'Missing name or value' }, 400);
+    await c.env.TOKENS.put(name, value);
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
+});
+
+// Delete a token
+app.delete('/admin/tokens/:name', adminAuth, async (c) => {
+  try {
+    const name = c.req.param('name');
+    await c.env.TOKENS.delete(name);
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
+});
+
+// Get config
+app.get('/admin/config', adminAuth, async (c) => {
+  try {
+    const { keys } = await c.env.CONFIG.list();
+    const config = await Promise.all(keys.map(async (key: any) => {
+      const value = await c.env.CONFIG.get(key.name);
+      return { name: key.name, value };
+    }));
+    return c.json({ success: true, config });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
+});
+
+// Update config
+app.post('/admin/config', adminAuth, async (c) => {
+  try {
+    const { name, value } = await c.req.json();
+    if (!name || !value) return c.json({ success: false, error: 'Missing name or value' }, 400);
+    await c.env.CONFIG.put(name, value);
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
+});
+
+// Delete config
+app.delete('/admin/config/:name', adminAuth, async (c) => {
+  try {
+    const name = c.req.param('name');
+    await c.env.CONFIG.delete(name);
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
+});
+
+// --- End Admin API Endpoints ---
 
 // OpenAI Compatible Chat Completions Endpoint
 app.post('/v1/chat/completions', async (c) => {
